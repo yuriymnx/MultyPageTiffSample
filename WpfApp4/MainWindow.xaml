@@ -16,17 +16,26 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <!-- Пагинация -->
-        <StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Center" Margin="5">
-            <Button Content="←" Command="{Binding PrevPageCommand}"/>
-            <TextBox Text="{Binding DisplayCurrentPage, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Width="40" />
-            <TextBlock Text="/" Margin="2,0"/>
-            <TextBlock Text="{Binding TotalPages}"/>
-            <Button Content="→" Command="{Binding NextPageCommand}"/>
-        </StackPanel>
+        <!-- Верхняя панель: пагинация + масштаб -->
+        <DockPanel Grid.Row="0" LastChildFill="False" Margin="5">
+            <StackPanel Orientation="Horizontal" DockPanel.Dock="Left">
+                <Button Content="←" Command="{Binding PrevPageCommand}"/>
+                <TextBox Text="{Binding DisplayCurrentPage, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Width="40" />
+                <TextBlock Text="/" Margin="2,0"/>
+                <TextBlock Text="{Binding TotalPages}"/>
+                <Button Content="→" Command="{Binding NextPageCommand}"/>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" Margin="10,0,0,0">
+                <Button Content="-" Width="28" Command="{Binding ZoomOutCommand}"/>
+                <Button Content="+" Width="28" Margin="4,0,0,0" Command="{Binding ZoomInCommand}"/>
+                <Button Content="Reset" Margin="8,0,0,0" Command="{Binding ResetZoomCommand}"/>
+                <Button Content="По ширине" Margin="8,0,0,0" Command="{Binding FitToWidthCommand}" CommandParameter="{Binding ElementName=PagesList, Path=ActualWidth}"/>
+                <TextBlock Margin="12,0,0,0" VerticalAlignment="Center" Text="{Binding Zoom, StringFormat={}{0:P0}}"/>
+            </StackPanel>
+        </DockPanel>
 
         <!-- Список страниц -->
-        <ListBox Grid.Row="1"
+        <ListBox x:Name="PagesList" Grid.Row="1"
              ItemsSource="{Binding Pages}"
              VirtualizingStackPanel.IsVirtualizing="True"
              VirtualizingStackPanel.VirtualizationMode="Recycling"
@@ -38,7 +47,17 @@
             </i:Interaction.Behaviors>
             <ListBox.ItemTemplate>
                 <DataTemplate>
-                    <Image Source="{Binding Image}" Stretch="Uniform" Margin="5"/>
+                    <Border Margin="5" HorizontalAlignment="Stretch">
+                        <Image Source="{Binding Image}"
+                               Stretch="None"
+                               HorizontalAlignment="Center">
+                            <Image.LayoutTransform>
+                                <ScaleTransform
+                                    ScaleX="{Binding DataContext.Zoom, RelativeSource={RelativeSource AncestorType=ListBox}}"
+                                    ScaleY="{Binding DataContext.Zoom, RelativeSource={RelativeSource AncestorType=ListBox}}"/>
+                            </Image.LayoutTransform>
+                        </Image>
+                    </Border>
                 </DataTemplate>
             </ListBox.ItemTemplate>
         </ListBox>
