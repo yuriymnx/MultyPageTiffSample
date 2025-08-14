@@ -1,4 +1,5 @@
-﻿using System.Windows;
+﻿using System.IO;
+using System.Windows;
 
 namespace WpfApp4
 {
@@ -10,7 +11,21 @@ namespace WpfApp4
         public MainWindow()
         {
             InitializeComponent();
-            DataContext = new TiffViewerViewModel(@"C:\Users\Yury\Desktop\multipage_tif_example.tif");
+            
+            // Пример загрузки из файла в стрим
+            try
+            {
+                using var fileStream = File.OpenRead(@"C:\Users\Yury\Desktop\multipage_tif_example.tif");
+                var memoryStream = new MemoryStream();
+                fileStream.CopyTo(memoryStream);
+                memoryStream.Position = 0;
+                
+                DataContext = new TiffViewerViewModel(memoryStream);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка загрузки файла: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
     }
 }

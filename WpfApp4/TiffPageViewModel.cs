@@ -3,15 +3,16 @@ using System.Windows.Media.Imaging;
 
 namespace WpfApp4;
 
-public partial class TiffPageViewModel(TiffPageLoader loader, int pageIndex) : ObservableObject
+public partial class TiffPageViewModel : ObservableObject
 {
-    public int PageIndex { get; } = pageIndex;
+    public int PageIndex { get; }
 
     [ObservableProperty]
     private BitmapImage? _image;
 
-    public async Task LoadAsync()
+    public TiffPageViewModel(int pageIndex, BitmapImage image)
     {
-        Image ??= await loader.GetPageAsync(PageIndex);
+        PageIndex = pageIndex;
+        Image = image;
     }
 }

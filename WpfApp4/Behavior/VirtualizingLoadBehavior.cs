@@ -19,11 +19,11 @@ public class VirtualizingScrollPaginationBehavior : Behavior<ListBox>
         var scrollViewer = FindScrollViewer(AssociatedObject);
         if (scrollViewer != null)
         {
-            scrollViewer.ScrollChanged += async (_, __) => await OnScrollChangedAsync();
+            scrollViewer.ScrollChanged += OnScrollChanged;
         }
     }
 
-    private async Task OnScrollChangedAsync()
+    private void OnScrollChanged(object sender, ScrollChangedEventArgs e)
     {
         if (AssociatedObject.DataContext is not TiffViewerViewModel vm)
             return;
@@ -36,10 +36,7 @@ public class VirtualizingScrollPaginationBehavior : Behavior<ListBox>
             if (VisualTreeHelper.GetChild(presenter, 0) is VirtualizingStackPanel panel)
             {
                 int firstIndex = (int)panel.VerticalOffset;
-                int visibleCount = (int)panel.ViewportHeight + 2; // запас
-                int lastIndex = firstIndex + visibleCount;
-
-                await vm.LoadVisiblePagesAsync(firstIndex, lastIndex);
+                vm.CurrentPage = firstIndex;
             }
         }
     }

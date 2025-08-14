@@ -3,6 +3,8 @@ using CommunityToolkit.Mvvm.Input;
 using ImageMagick;
 using System;
 using System.Collections.ObjectModel;
+using System.IO;
+using System.Windows.Media.Imaging;
 
 namespace WpfApp4;
 public partial class TiffViewerViewModel : ObservableObject
@@ -35,27 +37,44 @@ public partial class TiffViewerViewModel : ObservableObject
 
     public int TotalPages => Pages.Count;
 
-    private readonly TiffPageLoader _loader;
-
     [ObservableProperty]
     private double _zoom = 1.0;
 
-    public TiffViewerViewModel(string filePath)
+    public TiffViewerViewModel(Stream tiffStream)
     {
-        _loader = new TiffPageLoader(filePath);
-
-        using var images = new MagickImageCollection(filePath);
-        Pages = [];
-
-        for (int i = 0; i < images.Count; i++)
-            Pages.Add(new TiffPageViewModel(_loader, i));
+        Pages = new ObservableCollection<TiffPageViewModel>();
+        LoadPagesFromStream(tiffStream);
     }
 
-    public async Task LoadVisiblePagesAsync(int first, int last)
+    private void LoadPagesFromStream(Stream tiffStream)
     {
-        CurrentPage = first;
-        for (int i = first; i <= last && i < Pages.Count; i++)
-            await Pages[i].LoadAsync();
+        try
+        {
+            using var images = new MagickImageCollection(tiffStream);
+            
+            for (int i = 0; i < images.Count; i++)
+            {
+                var image = images[i];
+                using var ms = new MemoryStream();
+                image.Format = MagickFormat.Png;
+                image.Write(ms);
+                ms.Position = 0;
+
+                var bmp = new BitmapImage();
+                bmp.BeginInit();
+                bmp.CacheOption = BitmapCacheOption.OnLoad;
+                bmp.StreamSource = ms;
+                bmp.EndInit();
+                bmp.Freeze();
+
+                Pages.Add(new TiffPageViewModel(i, bmp));
+            }
+        }
+        catch (Exception ex)
+        {
+            // В реальном приложении здесь должна быть обработка ошибок
+            System.Diagnostics.Debug.WriteLine($"Error loading TIFF: {ex.Message}");
+        }
     }
 
     [RelayCommand]
@@ -101,7 +120,7 @@ public partial class TiffViewerViewModel : ObservableObject
 
         var current = Pages[CurrentPage];
         var bmp = current.Image;
-        if (bmp == null) return; // page not yet loaded
+        if (bmp == null) return;
 
         var availableWidth = Math.Max(0, viewportWidth - 30);
         if (availableWidth <= 0 || bmp.PixelWidth <= 0) return;
