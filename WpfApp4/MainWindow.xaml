@@ -39,10 +39,10 @@
              ItemsSource="{Binding Pages}"
              VirtualizingStackPanel.IsVirtualizing="True"
              VirtualizingStackPanel.VirtualizationMode="Recycling"
-             ScrollViewer.CanContentScroll="True">
+             ScrollViewer.CanContentScroll="True"
+                 VirtualizingPanel.ScrollUnit="Pixel">
             <i:Interaction.Behaviors>
                 <behavior:VirtualizingScrollPaginationBehavior/>
-                <behavior:SlowMouseWheelScrollBehavior ScrollFactor="0.0099"/>
                 <behavior:ScrollToIndexBehavior Index="{Binding CurrentPage}"/>
             </i:Interaction.Behaviors>
             <ListBox.ItemTemplate>
