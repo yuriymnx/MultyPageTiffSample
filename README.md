@@ -1,50 +1,40 @@
-# MultyPageTiffSample - Плавная прокрутка
+using System.Windows.Controls;
+using System.Windows.Media;
+using System.Windows.Threading;
 
-## Описание изменений
+public static class ListBoxExtensions
+{
+    public static void ScrollItemToTop(this ListBox listBox, object item)
+    {
+        if (item == null) return;
 
-Реализована плавная прокрутка в ListBox с использованием `VirtualizingPanel.ScrollUnit="Pixel"` для улучшения пользовательского опыта при просмотре многостраничных TIFF файлов.
+        listBox.Dispatcher.InvokeAsync(() =>
+        {
+            var listBoxItem = listBox.ItemContainerGenerator.ContainerFromItem(item) as ListBoxItem;
+            if (listBoxItem == null) return;
 
-## Основные изменения
+            // Находим ScrollViewer
+            var scrollViewer = FindVisualChild<ScrollViewer>(listBox);
+            if (scrollViewer == null) return;
 
-### 1. MainWindow.xaml
-- Добавлен `VirtualizingPanel.ScrollUnit="Pixel"` для плавной пиксельной прокрутки
-- Добавлено поведение `ScrollSyncBehavior` для синхронизации текущей страницы с прокруткой
+            // Получаем позицию элемента относительно ListBox
+            var transform = listBoxItem.TransformToAncestor(listBox);
+            var position = transform.Transform(new System.Windows.Point(0, 0));
 
-### 2. ScrollToIndexBehavior.cs
-- Улучшена логика прокрутки для работы с пиксельной прокруткой
-- Добавлен учет позиции элементов с небольшим отступом сверху
-- Улучшена точность навигации между страницами
+            // Смещаем ScrollViewer так, чтобы элемент оказался сверху
+            scrollViewer.ScrollToVerticalOffset(scrollViewer.VerticalOffset + position.Y);
+        }, DispatcherPriority.Loaded);
+    }
 
-### 3. ScrollSyncBehavior.cs (новый файл)
-- Автоматическая синхронизация текущей страницы с прокруткой
-- Учет масштаба изображений при определении видимой страницы
-- Обновление нумерации страниц в реальном времени
-
-### 4. TiffViewerViewModel.cs
-- Добавлен метод `GetVisiblePageIndex()` для определения видимой страницы
-- Учет масштаба при расчете позиций страниц
-
-## Функциональность
-
-✅ **Плавная прокрутка** - использование `ScrollUnit="Pixel"` для плавного скроллинга  
-✅ **Синхронизация страниц** - автоматическое обновление текущей страницы при прокрутке  
-✅ **Учет масштаба** - корректная работа навигации при любом масштабе  
-✅ **Кнопки навигации** - "Предыдущая" и "Следующая" страница работают корректно  
-✅ **Нумерация страниц** - отображение текущей страницы синхронизировано с прокруткой  
-✅ **Виртуализация** - сохранена производительность при большом количестве страниц  
-
-## Технические детали
-
-- **VirtualizingPanel.ScrollUnit="Pixel"** - обеспечивает плавную пиксельную прокрутку
-- **ScrollSyncBehavior** - отслеживает изменения прокрутки и обновляет текущую страницу
-- **GetVisiblePageIndex()** - вычисляет индекс видимой страницы с учетом масштаба
-- **ScrollToIndexBehavior** - улучшен для точной навигации к выбранной странице
-
-## Использование
-
-1. Запустите приложение
-2. Откройте многостраничный TIFF файл
-3. Используйте колесо мыши для плавной прокрутки
-4. Кнопки навигации автоматически обновляют текущую страницу
-5. Нумерация страниц синхронизирована с прокруткой
-6. Масштабирование не влияет на корректность навигации
+    private static T FindVisualChild<T>(DependencyObject obj) where T : DependencyObject
+    {
+        for (int i = 0; i < VisualTreeHelper.GetChildrenCount(obj); i++)
+        {
+            var child = VisualTreeHelper.GetChild(obj, i);
+            if (child is T t) return t;
+            var childOfChild = FindVisualChild<T>(child);
+            if (childOfChild != null) return childOfChild;
+        }
+        return null;
+    }
+}
